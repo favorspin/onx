@@ -154,7 +154,7 @@ def main(args):
             date(int(year),int(month),int(day))
         except:
             valid_date = False
-        files =  [args.load_date.replace('-','')]
+        files = [args.load_date.replace('-','')]
 
     # import data
     if valid_date:
