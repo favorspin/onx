@@ -1,7 +1,7 @@
 create extension postgis;
 
 create schema onx_raw;
-create schema onx;
+create schema onx_analytics;
 
 create table onx_raw.owners (
     account_id varchar,
