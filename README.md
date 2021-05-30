@@ -14,7 +14,7 @@ Load Boulder, CO parcel and land ownership data and perform simple analysis of t
 
 ## Setup 
 
-### Edit databaase config file
+### Edit database config file
 Edit config file at `/config/database.ini` with your connection string. A sample is provided at `/config/database_sample.ini`
 
 ### Run initial SQL
@@ -82,15 +82,15 @@ The tables in this schema are organized in such a way as to make access to key m
 
 Future tables in this schema may contain other levels of aggregations as more data becomes available, as well as history tables to keep track of slowly changing dimensions.
 
-##Analysis
+## Analysis
 
-###Assumptions
+### Assumptions
 Some assumptions were made to analyze the data provided. They were made to the best of my knowledge of the data, and are as follows:
 
 1. Parcels without a geometry are invalid. They have been removed from the raw data.
 2. Parcels without a `parcel_id` are invalid. They have been removed from the raw data.
 3. Parcels with two or more geometry entires have their areas summed together when calculating land area.
-4. Real property is defined as property with an account number starting with `R` - properties with other account numbers contain records for buildings that exist on parcels are and not counted when summing land area or counts of parcels by type.
+4. Real property is defined as property with an account number starting with `R` - properties with other account numbers contain records for buildings that exist on parcels and are not counted when summing land area or counts of parcels by type.
 5. When two or more owners each have a 100% ownership stake in a parcel, all are given full credit for the land area in the analysis as well as the `onx_analytics.owner_summary` table.
 6. Residential parcels are defined as Real Account parcels having an `account_type` in the following list:
 	- `APARTMENT`
@@ -100,18 +100,18 @@ Some assumptions were made to analyze the data provided. They were made to the b
 	- `RESIDENTIAL CONDO`
 7. Analysis questions were answered using data from 2021-05-26, however the data set is updated daily, and changes to size and shape of parcels as well as ownership of those parcels occur on a daily basis.
 
-###Data Issues
+### Data Issues
 The following issues were identified in the data. Further research would be needed to know how to properly handle these cases.
 
 - Parcels aren't always single units of land. They can have multiple geometries with the same parcel number.
 - Some parcels have no associated geometry in the shapefile. 
 - Some owners have records for a `parcel_id` that does not exist in the shapefile.
-- Some parcels have no owner, and therefore no `account_type` to assoiate with the parcel.
-- Multiple primary owners can exists for a single parcel with a total ownership percentage >100%. This often happens with accounts with the type `RESIDENTIAL CONDO` causing each owner to be counted as a whole owner of the land area comprising of the condo complex rather than just their individual condo.
+- Some parcels have no owner, and therefore no `account_type` to associate with the parcel.
+- Multiple primary owners can exist for a single parcel with a total ownership percentage >100%. This often happens with accounts with the type `RESIDENTIAL CONDO` causing each owner to be counted as a whole owner of the land area comprising of the condo complex rather than just their individual condo.
 
-###Analysis Questions
+### Analysis Questions
 
-####1. How much total acreage of residential land exists in Boulder County?
+#### 1. How much total acreage of residential land exists in Boulder County?
 
 107882.82 acres
 
@@ -141,7 +141,7 @@ from parcels p
 join parcel_account_type pat on pat.parcel_id = p.parcel_id;
 ~~~
 
-####2. Who owns the most acreage of residential lands?
+#### 2. Who owns the most acreage of residential lands?
 
 ST VRAIN RESERVOIR & FISH CO with 245.94 acres of residential land area owned.
 
@@ -185,7 +185,7 @@ where report_date = '2021-05-26'
 order by 2 desc;
 ~~~
 
-####3. Who owns the most total propeties?
+#### 3. Who owns the most total properties?
 
 COUNTY OF BOULDER with 1291 real account properties.
 
@@ -217,13 +217,13 @@ where report_date = '2021-05-26'
 order by 2 desc;
 ~~~
 
-##Future Develompments/Improvements
+## Future Developments/Improvements
 
-There are many improvements to this pipeline that could be made, but did not fit in the scope of the project. This is built failry specifically to the data that was provided, but could be generalized to handle different sources and more data, but following a similar patter of loading raw data from a source then building analytics tables to match the company's/end users needs/metrics. A short list of improvements is listed below:
+There are many improvements to this pipeline that could be made, but did not fit in the scope of the project. This is built fairly specifically to the data that was provided, but could be generalized to handle different sources and more data, but following a similar patter of loading raw data from a source then building analytics tables to match the company's/end users needs/metrics. A short list of improvements is listed below:
 
 - Genericise load of various files (csv, shapefile, etc) so that there is a single load job that can adapt to the needs of the file through the use of metadata.
-- Automate retriveing new source data, preferably through an API and store data on a cloud storage system like s3 or 
+- Automate retrieving new source data, preferably through an API and store data on a cloud storage system like s3 or Google Cloud Storage.
 - Separate Load and Transform portions of the pipeline into separate scheduleable jobs.
 - Make use of multithreading/multiprocessing to load and/or transform in parallel.
 - Build out a larger schema of analytics tables based on the needs of the end user.
-- Real-time job monitoring and logging to better cactch errors, or re-run failed jobs.
+- Real-time job monitoring and logging to better catch errors, or re-run failed jobs.
