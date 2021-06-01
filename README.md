@@ -108,12 +108,15 @@ The following issues were identified in the data. Further research would be need
 - Some owners have records for a `parcel_id` that does not exist in the shapefile.
 - Some parcels have no owner, and therefore no `account_type` to associate with the parcel.
 - Multiple primary owners can exist for a single parcel with a total ownership percentage >100%. This often happens with accounts with the type `RESIDENTIAL CONDO` causing each owner to be counted as a whole owner of the land area comprising of the condo complex rather than just their individual condo.
+- Parcels can be zoned to multiple types (i.e. `RESIDENTIAL` and `NATURAL RESRC`) simultaneously.
 
 ### Analysis Questions
 
 #### 1. How much total acreage of residential land exists in Boulder County?
 
-107882.82 acres
+108049.84 acres
+
+Query from raw data:
 
 ~~~sql
 with parcels as (
@@ -127,18 +130,28 @@ with parcels as (
 
 , parcel_account_type as (
     select distinct
-        parcel_id
+        parcel_id,
+        account_type
     from onx_raw.owners
     where is_real_property
-        and account_type in ('APARTMENT', 'MIXED USE', 'RESIDENT LAND',
-                             'RESIDENTIAL', 'RESIDENTIAL CONDO')
         and file_index = '20210526'
 )
 
-select 
+select
 	sum(area_m2 * 0.00024711) as total_residential_land_acres
 from parcels p
-join parcel_account_type pat on pat.parcel_id = p.parcel_id;
+join parcel_account_type pat on pat.parcel_id = p.parcel_id
+where account_type in ('APARTMENT', 'MIXED USE', 'RESIDENT LAND',
+                             'RESIDENTIAL', 'RESIDENTIAL CONDO');
+~~~
+
+Query from summary table:
+
+~~~sql
+select sum(land_area_acres) as total_land_area
+from onx_analytics.land_type_daily_summary
+where report_date = '2021-05-26'
+    and is_residential;
 ~~~
 
 #### 2. Who owns the most acreage of residential lands?

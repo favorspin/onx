@@ -43,3 +43,19 @@ create table onx_analytics.owner_daily_summary (
     real_property_gain_loss int,
     pct_land_area_gain_loss decimal(38,10)
 );
+
+create table onx_analytics.land_type_daily_summary
+(
+    report_date date,
+    account_type varchar,
+    is_residential boolean,
+    is_commercial boolean,
+    total_parcels int,
+    total_owners int,
+    land_area_m2 decimal(38,10),
+    land_area_acres decimal(38,10),
+    pct_total_land_area decimal(38,10),
+    total_parcel_gain_loss int,
+    pct_land_area_gain_loss decimal(38,10)
+);
+

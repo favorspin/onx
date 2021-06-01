@@ -176,5 +176,56 @@ analytic_rebuild = """
                 1 - (coalesce(lag(total_real_property_land_area_owned_m2, 1) over (partition by owner_name order by report_date asc),0)
                     / nullif(total_real_property_land_area_owned_m2,0)) as pct_land_area_gain_loss
             from daily_summary
-            order by report_date desc
+            order by report_date desc;
+
+            truncate table onx_analytics.land_type_daily_summary;
+            insert into onx_analytics.land_type_daily_summary
+            with parcels as (
+                select
+                    file_index,
+                    parcel_id,
+                    sum(st_area(geom, true)) as area_m2
+                from onx_raw.parcels p
+                group by 1,2
+            )
+
+            , parcel_account_type as (
+                select
+                    file_index,
+                    parcel_id,
+                    account_type,
+                    count(distinct owner_name) as owners
+                from onx_raw.owners
+                where is_real_property
+                group by 1,2,3
+            )
+
+            , agg as (
+                select
+                    to_date(p.file_index, 'yyyyMMdd') as report_date,
+                    pat.account_type,
+                    case when account_type in ('APARTMENT', 'MIXED USE', 'RESIDENT LAND',
+                                             'RESIDENTIAL', 'RESIDENTIAL CONDO')
+                        then true else false end as is_residential,
+                    case when account_type in ('BED & BREAK', 'COMMERCIAL', 'MIXED USE')
+                        then true else false end as is_commercial,
+                    count(distinct p.parcel_id) as total_parcels,
+                    sum(pat.owners) as total_owners,
+                    sum(p.area_m2) as land_area_m2,
+                    sum(p.area_m2  * 0.00024711) as land_area_acres
+                from parcels p
+                join parcel_account_type pat
+                    on pat.parcel_id = p.parcel_id
+                    and pat.file_index = p.file_index
+                group by 1,2,3,4
+            )
+
+
+            select *,
+                land_area_m2 / nullif(sum(land_area_m2) over (partition by report_date),0) as pct_total_land_area,
+                total_parcels
+                    - coalesce(lag(total_parcels, 1) over (partition by account_type order by report_date asc),0) as total_parcel_gain_loss,
+                1 - (coalesce(lag(land_area_m2,1) over (partition by account_type order by report_date asc), 0)
+                    / nullif(land_area_m2,0)) as pct_land_area_gain_loss
+            from agg;
         """
